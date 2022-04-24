@@ -6,9 +6,9 @@ public class ImageFloat {
     public float[][] g = null;
     public float[][] b = null;
 
-    public ImageFloat(int row, int col) {
-        r = new float[row][col];
-        g = new float[row][col];
-        b = new float[row][col];
+    public ImageFloat(int _row, int _col) {
+        r = new float[_row][_col];
+        g = new float[_row][_col];
+        b = new float[_row][_col];
     }
 }

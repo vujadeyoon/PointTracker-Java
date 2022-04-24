@@ -9,45 +9,47 @@ import java.util.logging.Logger;
 
 
 public class PointTracker extends MatrixOperator{
-    private int maxl = 0;
-    private float nn_thresh = 0.0f;
-    private ArrayList<int[][]> all_pts = new ArrayList<int[][]>();
-    private float[][] last_desc;
-    private float[][] tracks;
-    private int track_count;
-    private int max_score;
+    private static int maxl = 0;
+    private static float nn_thresh = 0.0f;
+    private static ArrayList<int[][]> all_pts = new ArrayList<int[][]>();
+    private static float[][] last_desc;
+    private static float[][] tracks;
+    private static int track_count;
+    private static int max_score;
     private final static Logger Log = Logger.getGlobal();
 
-    public PointTracker(int max_length, float nn_thresh) {
+    public PointTracker(int _max_length, float _nn_thresh) {
         // Java
         Log.setLevel(Level.WARNING);
 
-        if (max_length < 2) {
+        if (_max_length < 2) {
             throw new IllegalArgumentException("max_length must be greater than or equal to 2.");
         }
 
-        this.maxl = max_length;
-        this.nn_thresh = nn_thresh;
-        for(int i=0; i<this.maxl; i++) {
-            this.all_pts.add(new int[2][0]); // crucial
+        maxl = _max_length;
+        nn_thresh = _nn_thresh;
+        for(int i=0; i<maxl; i++) {
+            all_pts.add(new int[2][0]); // crucial
         }
-        this.tracks = get_float_2d_array(0, this.maxl+2, 0.0f); // crucial
-        this.track_count = 0;
-        this.max_score = 9999;
+        tracks = get_float_2d_array(0, maxl+2, 0.0f); // crucial
+        track_count = 0;
+        max_score = 9999;
+
+        System.out.println(maxl);
     }
 
-    private int[] get_offsets() {
+    public static int[] get_offsets() {
         /*
         Iterate through list of points and accumulate an offset value. Used to
         index the global point IDs into the list of points.
         Returns
             offsets - N length array with integer offset locations.
         */
-        int n = this.all_pts.size();
+        int n = all_pts.size();
         int[] offsets = get_int_1d_array(n, 0);
         int[] res = get_int_1d_array(n, 0);
         for (int y = 0; y < (offsets.length - 1); y++) {
-            offsets[y] = this.all_pts.get(y)[0].length;
+            offsets[y] = all_pts.get(y)[0].length;
         }
 
         res[0] = offsets[0];
@@ -58,7 +60,7 @@ public class PointTracker extends MatrixOperator{
         return res;
     }
 
-    private float[][] nn_match_two_way(float[][] desc1, float[][] desc2, float nn_thresh) {
+    public static float[][] nn_match_two_way(float[][] desc1, float[][] desc2, float nn_thresh) {
         /*
         Performs two-way nearest neighbor matching of two sets of descriptors, such
         that the NN match from descriptor A->B must equal the NN match from B->A.
@@ -117,7 +119,7 @@ public class PointTracker extends MatrixOperator{
         return matches;
     }
 
-    private void update(int[][] pts, float[][] desc) {
+    public static void update(int[][] pts, float[][] desc) {
         /*
         Add a new set of point and descriptor observations to the tracker.
 
@@ -144,42 +146,42 @@ public class PointTracker extends MatrixOperator{
         }
 
         // Initialize last_desc.
-        if (this.last_desc == null) {
-            this.last_desc = get_float_2d_array(desc.length, 0, 0.0f); // crucial
+        if (last_desc == null) {
+            last_desc = get_float_2d_array(desc.length, 0, 0.0f); // crucial
         }
 
         //  Remove oldest points, store its size to update ids later.
-        int remove_size = this.all_pts.get(0)[0].length;
-        this.all_pts.remove(0);
-        this.all_pts.add(pts);
+        int remove_size = all_pts.get(0)[0].length;
+        all_pts.remove(0);
+        all_pts.add(pts);
 
         // Remove oldest point in track.
-        this.tracks = get_float_2d_sub_array(this.tracks, 2, 1);
+        tracks = get_float_2d_sub_array(tracks, 2, 1);
 
         // Update track offsets.
-        for (int i = 2; i < this.tracks[0].length; i++) {
-            for (int j = 0; j < this.tracks.length; j++) {
-                this.tracks[j][i] -= (float) remove_size;
+        for (int i = 2; i < tracks[0].length; i++) {
+            for (int j = 0; j < tracks.length; j++) {
+                tracks[j][i] -= (float) remove_size;
             }
         }
 
         // self.tracks[:, 2:][self.tracks[:, 2:] < -1] = -1
         for (int i = 0; i < tracks.length; i++) {
             for (int j = 2; j < tracks[0].length; j++) {
-                if (this.tracks[i][j] < -1) {
-                    this.tracks[i][j] = -1;
+                if (tracks[i][j] < -1) {
+                    tracks[i][j] = -1;
                 }
             }
         }
 
-        int[] offsets = this.get_offsets();
+        int[] offsets = get_offsets();
 
         // Add a new -1 column.
-        this.tracks = hstack_2d_float_array(this.tracks, get_float_2d_array(this.tracks.length, 1, -1.0f));
+        tracks = hstack_2d_float_array(tracks, get_float_2d_array(tracks.length, 1, -1.0f));
 
         // Try to append to existing tracks.
         boolean[] matched = get_bool_1d_array(pts[0].length, false);
-        float[][] matches = nn_match_two_way(this.last_desc, desc, this.nn_thresh);
+        float[][] matches = nn_match_two_way(last_desc, desc, nn_thresh);
 
         float[][] matches_T = transpose_float_2d_array(matches);
 
@@ -189,16 +191,16 @@ public class PointTracker extends MatrixOperator{
 
             // found = np.argwhere(self.tracks[:, -2] == id1)
             temp_cnt = 0;
-            for (int j = 0; j < this.tracks.length; j++) {
-                if (this.tracks[j][this.tracks.length - 2] == (float) id1) {
+            for (int j = 0; j < tracks.length; j++) {
+                if (tracks[j][tracks.length - 2] == (float) id1) {
                     temp_cnt++;
                 }
             }
 
             int[] found = get_int_1d_array(temp_cnt, 0);
             temp_cnt = 0;
-            for (int j = 0; j < this.tracks.length; j++) {
-                if (this.tracks[j][this.tracks.length - 2] == (float) id1) {
+            for (int j = 0; j < tracks.length; j++) {
+                if (tracks[j][tracks.length - 2] == (float) id1) {
                     found[temp_cnt] = j;
                 }
             }
@@ -207,11 +209,11 @@ public class PointTracker extends MatrixOperator{
                 matched[(int) matches_T[i][1]] = true;
 
                 int row = found[0]; // row = int(found)
-                this.tracks[row][this.tracks.length - 1] = (float) id2;
+                tracks[row][tracks.length - 1] = (float) id2;
 
-                if (this.tracks[row][1] == this.max_score) {
+                if (tracks[row][1] == max_score) {
                     // Initialize track score.
-                    this.tracks[row][1] = matches_T[i][2];
+                    tracks[row][1] = matches_T[i][2];
                 } else {
                     /*
                     Update track score with running average.
@@ -221,13 +223,13 @@ public class PointTracker extends MatrixOperator{
 
                     // track_len = (self.tracks[row, 2:] != -1).sum() - 1.
                     track_len = -1.0f;
-                    for (int j = 2; j < this.tracks[0].length; j++) {
-                        if (this.tracks[row][j] != -1.0) {
-                            track_len += this.tracks[row][j];
+                    for (int j = 2; j < tracks[0].length; j++) {
+                        if (tracks[row][j] != -1.0) {
+                            track_len += tracks[row][j];
                         }
                     }
                     float frac = 1.0f / track_len;
-                    this.tracks[row][1] = (1.0f - frac) * this.tracks[row][1] + frac * matches_T[i][2];
+                    tracks[row][1] = (1.0f - frac) * tracks[row][1] + frac * matches_T[i][2];
                 }
             }
         }
@@ -255,7 +257,7 @@ public class PointTracker extends MatrixOperator{
         }
 
         // new_tracks = -1*np.ones((new_ids.shape[0], self.maxl + 2))
-        float[][] new_tracks = get_float_2d_array(new_ids.length, this.maxl + 2, -1.0f);
+        float[][] new_tracks = get_float_2d_array(new_ids.length, maxl + 2, -1.0f);
         for (int i = 0; i < new_tracks.length; i++) {
             new_tracks[i][new_tracks.length - 1] = (float) new_ids[i];
         }
@@ -264,23 +266,23 @@ public class PointTracker extends MatrixOperator{
 
         float[] new_trackids = get_float_1d_array(new_num, 0.0f);
         for (int i = 0; i < new_trackids.length; i++) {
-            new_trackids[i] = ((float) i + (float) this.track_count);
+            new_trackids[i] = ((float) i + (float) track_count);
         }
 
         for (int i = 0; i < new_tracks.length; i++) {
             new_tracks[i][0] = new_trackids[i];
-            new_tracks[i][1] = this.max_score;
+            new_tracks[i][1] = max_score;
         }
 
-        this.tracks = vstack_2d_float_array(this.tracks, new_tracks);
-        this.track_count += new_num; // Update the track count.
+        tracks = vstack_2d_float_array(tracks, new_tracks);
+        track_count += new_num; // Update the track count.
 
         // Remove empty tracks.
         // keep_rows = np.any(self.tracks[:, 2:] >= 0, axis=1);
-        boolean[] keep_rows = get_bool_1d_array(this.tracks.length, false);
-        for (int i = 0; i < this.tracks.length; i++) {
-            for (int j = 2; j < this.tracks[0].length; j++) {
-                if (this.tracks[i][j] >= 0.0f) {
+        boolean[] keep_rows = get_bool_1d_array(tracks.length, false);
+        for (int i = 0; i < tracks.length; i++) {
+            for (int j = 2; j < tracks[0].length; j++) {
+                if (tracks[i][j] >= 0.0f) {
                     keep_rows[i] = true;
                     continue;
                 }
@@ -288,24 +290,24 @@ public class PointTracker extends MatrixOperator{
         }
 
         // self.tracks = self.tracks[keep_rows, :]
-        float[][] temp_tracks = this.tracks.clone();
+        float[][] temp_tracks = tracks.clone();
         int num_hit = get_num_true_from_1d_boolean_array(keep_rows);
-        this.tracks = get_float_2d_array(num_hit, temp_tracks[0].length, 0.0f);
+        tracks = get_float_2d_array(num_hit, temp_tracks[0].length, 0.0f);
         temp_cnt = 0;
         for (int i = 0; i < keep_rows.length; i++) {
             if (keep_rows[i]) {
-                for (int j = 0; j < this.tracks[0].length; j++) {
-                    this.tracks[temp_cnt][j] = temp_tracks[i][j];
+                for (int j = 0; j < tracks[0].length; j++) {
+                    tracks[temp_cnt][j] = temp_tracks[i][j];
                 }
                 temp_cnt++;
             }
         }
 
         // Store the last descriptors.
-        this.last_desc = desc.clone();
+        last_desc = desc.clone();
     }
 
-    private float[][] get_tracks(int min_length) {
+    public float[][] get_tracks(int min_length) {
         /*
         Retrieve point tracks of a given minimum length.
         Input
@@ -323,14 +325,14 @@ public class PointTracker extends MatrixOperator{
             throw new IllegalArgumentException("min_length is too small.");
         }
 
-        boolean[] valid = get_bool_1d_array(this.tracks.length, true);
+        boolean[] valid = get_bool_1d_array(tracks.length, true);
 
         // good_len = np.sum(self.tracks[:, 2:] != -1, axis=1) >= min_length;
-        boolean[] good_len = get_bool_1d_array(this.tracks.length, false);
-        for (int i = 0; i < this.tracks.length; i++) {
+        boolean[] good_len = get_bool_1d_array(tracks.length, false);
+        for (int i = 0; i < tracks.length; i++) {
             temp_cnt = 0;
-            for (int j = 2; j < this.tracks[0].length; j++) {
-                if (this.tracks[i][j] != -1) {
+            for (int j = 2; j < tracks[0].length; j++) {
+                if (tracks[i][j] != -1) {
                     temp_cnt++;
                 }
             }
@@ -341,9 +343,9 @@ public class PointTracker extends MatrixOperator{
 
         // Remove tracks which do not have an observation in most recent frame.
         // not_headless = (self.tracks[:, -1] != -1)
-        boolean[] not_headless = get_bool_1d_array(this.tracks.length, false);
-        for (int i = 0; i < this.tracks.length; i++) {
-            if (this.tracks[i][this.tracks[0].length - 1] != -1) {
+        boolean[] not_headless = get_bool_1d_array(tracks.length, false);
+        for (int i = 0; i < tracks.length; i++) {
+            if (tracks[i][tracks[0].length - 1] != -1) {
                 not_headless[i] = true;
             }
         }
@@ -352,12 +354,12 @@ public class PointTracker extends MatrixOperator{
         boolean[] keepers = logical_and_for_three_arrays(valid, good_len, not_headless);
 
         // returned_tracks = self.tracks[keepers, :].copy()
-        float[][] returned_tracks = get_float_2d_array(get_num_true_from_1d_boolean_array(keepers), this.tracks[0].length, 0.0f);
+        float[][] returned_tracks = get_float_2d_array(get_num_true_from_1d_boolean_array(keepers), tracks[0].length, 0.0f);
         temp_cnt = 0;
         for (int i = 0; i < keepers.length; i++) {
             if (keepers[i]) {
-                for (int j = 0; j < this.tracks[0].length; j++) {
-                    returned_tracks[temp_cnt][j] = this.tracks[i][j];
+                for (int j = 0; j < tracks[0].length; j++) {
+                    returned_tracks[temp_cnt][j] = tracks[i][j];
                     temp_cnt++;
                 }
             }

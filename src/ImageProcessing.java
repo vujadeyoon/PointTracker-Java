@@ -6,10 +6,10 @@ import java.io.IOException;
 
 
 public class ImageProcessing {
-    public static float[][] imread_gray(String path_file_name) {
+    public static float[][] imread_gray(String _path_file) {
         BufferedImage img = null;
         try {
-            img = ImageIO.read(new File(path_file_name));
+            img = ImageIO.read(new File(_path_file));
         } catch (IOException e) {
             throw new IllegalArgumentException("ImageIO.read is failed.");
         }
@@ -30,10 +30,10 @@ public class ImageProcessing {
         return res;
     }
 
-    public static ImageFloat imread(String path_file_name) {
+    public static ImageFloat imread(String _path_file) {
         BufferedImage img = null;
         try {
-            img = ImageIO.read(new File(path_file_name));
+            img = ImageIO.read(new File(_path_file));
         } catch (IOException e) {
             throw new IllegalArgumentException("ImageIO.read is failed.");
         }

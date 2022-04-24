@@ -486,5 +486,14 @@ public class MatrixOperator {
 
         return res;
     }
+
+    public static void print_float_2d_array(float[][] arr) {
+        for (int i = 0; i < arr.length; i++) {
+            for (int j = 0; j < arr[0].length; j++) {
+                System.out.printf("%f ", arr[i][j]);
+            }
+            System.out.println();
+        }
+    }
 }
 

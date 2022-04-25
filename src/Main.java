@@ -11,8 +11,9 @@ public class Main {
         float params_tracker_nn_thresh = 0.7f;
         int params_tracker_min_length = 2;
         boolean is_first = true;
+        boolean is_debug = false;
 
-        PointTracker tracker = new PointTracker(params_tracker_max_length, params_tracker_nn_thresh);
+        PointTracker tracker = new PointTracker(params_tracker_max_length, params_tracker_nn_thresh, is_debug);
         for (int _num_frame = 0; _num_frame < params_num_frames; _num_frame++) {
             System.out.println("[START] _num_frame: " + _num_frame);
 
@@ -29,14 +30,14 @@ public class Main {
             float[][] tracks = tracker.get_tracks(params_tracker_min_length, is_first);
 
             if (!is_first) {
-                System.out.printf("[Result] tracks: %dx%d.\n", tracks.length, tracks[0].length);
+                System.out.printf("[%d/%d][Result] tracks: %dx%d.\n", _num_frame, params_num_frames,tracks.length, tracks[0].length);
                 MatrixOperator.print_float_2d_array(tracks);
+                Util.pause();
             }
 
-            System.out.println("[END] _num_frame: " + _num_frame);
-            Util.pause();
-
             /*
+            // Debug
+
             MatrixOperator.print_float_2d_array(arr_img_color.r);
             MatrixOperator.print_float_2d_array(arr_img_color.g);
             MatrixOperator.print_float_2d_array(arr_img_color.b);

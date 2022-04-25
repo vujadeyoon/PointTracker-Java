@@ -21,10 +21,13 @@ public class PointTracker extends MatrixOperator{
     private static int track_count;
     private static int max_score;
     private final static Logger Log = Logger.getGlobal();
+    private static boolean is_debug;
 
-    public PointTracker(int _max_length, float _nn_thresh) throws IOException {
+    public PointTracker(int _max_length, float _nn_thresh, boolean _is_debug) throws IOException {
         // Java
         Log.setLevel(Level.WARNING);
+
+        is_debug = _is_debug;
 
         if (_max_length < 2) {
             throw new IllegalArgumentException("max_length must be greater than or equal to 2.");
@@ -41,8 +44,10 @@ public class PointTracker extends MatrixOperator{
         track_count = 0;
         max_score = 9999;
 
-        System.out.println("deb-0" + all_pts + all_pts.size());
-        Util.pause();
+        if (is_debug) {
+            System.out.println("deb-0" + all_pts + all_pts.size());
+            Util.pause();
+        }
     }
 
     public static int get_num_all_pts_idx(int _idx) {
@@ -64,10 +69,14 @@ public class PointTracker extends MatrixOperator{
         int[] offsets = get_int_1d_array(n, 0);
         int[] res = get_int_1d_array(n, 0);
 
-        System.out.printf("go-1: %d\n", res.length);
+        if (is_debug) {
+            System.out.printf("go-1: %d\n", res.length);
+        }
 
         for (int y = 0; y < (offsets.length - 1); y++) {
-            System.out.printf("go-2: %d\n", get_num_all_pts_idx(y));
+            if (is_debug) {
+                System.out.printf("go-2: %d\n", get_num_all_pts_idx(y));
+            }
             offsets[y + 1] = get_num_all_pts_idx(y);
         }
 
@@ -106,16 +115,18 @@ public class PointTracker extends MatrixOperator{
 
         }
 
-
-        System.out.println("[nn_match_two_way] START");
-
+        if (is_debug) {
+            System.out.println("[nn_match_two_way] START");
+        }
 
         // Compute L2 distance. Easy since vectors are unit normalized.
         float[][] dmat = sqrt(elementwise_arithmetic_computation_2d(clip(multiply_float_2d_array(transpose_float_2d_array(desc1), desc2), -1.0f, 1.0f), -2, 2));
 
-        System.out.printf("[nn_match_two_way] dmat: %dx%d\n", dmat.length, dmat[0].length);
-        MatrixOperator.print_float_2d_array(dmat);
-        Util.pause();
+        if (is_debug) {
+            System.out.printf("[nn_match_two_way] dmat: %dx%d\n", dmat.length, dmat[0].length);
+            MatrixOperator.print_float_2d_array(dmat);
+            Util.pause();
+        }
 
         // Get NN indices and scores.
         int[] idx = argmin_axis_1(dmat);
@@ -124,62 +135,70 @@ public class PointTracker extends MatrixOperator{
         // Threshold the NN matches.
         boolean[] keep = get_keep(scores, nn_thresh);
 
-        System.out.printf("[nn_match_two_way] idx: %d\n", idx.length);
-        MatrixOperator.print_int_1d_array(idx);
-        Util.pause();
+        if (is_debug) {
+            System.out.printf("[nn_match_two_way] idx: %d\n", idx.length);
+            MatrixOperator.print_int_1d_array(idx);
+            Util.pause();
 
-        System.out.printf("[nn_match_two_way] scores: %d\n", scores.length);
-        MatrixOperator.print_float_1d_array(scores);
-        Util.pause();
+            System.out.printf("[nn_match_two_way] scores: %d\n", scores.length);
+            MatrixOperator.print_float_1d_array(scores);
+            Util.pause();
 
-        System.out.printf("[nn_match_two_way] keep: %d\n", keep.length);
-        MatrixOperator.print_boolean_1d_array(keep);
-        Util.pause();
+            System.out.printf("[nn_match_two_way] keep: %d\n", keep.length);
+            MatrixOperator.print_boolean_1d_array(keep);
+            Util.pause();
+        }
 
         // Check if nearest neighbor goes both directions and keep those.
         int[] idx2 = argmin_axis_0(dmat);
         boolean[] keep_bi = get_keep_bi(idx, idx2);
 
-        System.out.printf("[nn_match_two_way] idx2: %d\n", idx2.length);
-        MatrixOperator.print_int_1d_array(idx2);
-        Util.pause();
+        if (is_debug) {
+            System.out.printf("[nn_match_two_way] idx2: %d\n", idx2.length);
+            MatrixOperator.print_int_1d_array(idx2);
+            Util.pause();
 
-        System.out.printf("[nn_match_two_way] keep_bi: %d\n", keep_bi.length);
-        MatrixOperator.print_boolean_1d_array(keep_bi);
-        Util.pause();
+            System.out.printf("[nn_match_two_way] keep_bi: %d\n", keep_bi.length);
+            MatrixOperator.print_boolean_1d_array(keep_bi);
+            Util.pause();
+        }
 
         keep = logical_and_for_two_arrays(keep, keep_bi);
         idx = make_int_array_hit_condition(idx, keep);
         scores = make_float_array_hit_condition(scores, keep);
 
+        if (is_debug) {
+            System.out.printf("[nn_match_two_way] idx: %d\n", idx.length);
+            MatrixOperator.print_int_1d_array(idx);
+            Util.pause();
 
-        System.out.printf("[nn_match_two_way] idx: %d\n", idx.length);
-        MatrixOperator.print_int_1d_array(idx);
-        Util.pause();
+            System.out.printf("[nn_match_two_way] scores: %d\n", scores.length);
+            MatrixOperator.print_float_1d_array(scores);
+            Util.pause();
 
-        System.out.printf("[nn_match_two_way] scores: %d\n", scores.length);
-        MatrixOperator.print_float_1d_array(scores);
-        Util.pause();
+            System.out.printf("[nn_match_two_way] keep: %d\n", keep.length);
+            MatrixOperator.print_boolean_1d_array(keep);
+            Util.pause();
+        }
 
-        System.out.printf("[nn_match_two_way] keep: %d\n", keep.length);
-        MatrixOperator.print_boolean_1d_array(keep);
-        Util.pause();
 
 
         // Get the surviving point indices.
         int[] m_idx1 = make_int_array_hit_condition(get_int_1d_arange(desc1[0].length), keep);
         int[] m_idx2 = idx; // shallow-copy; deep-copy: idx.clone();
 
-        System.out.printf("[nn_match_two_way] m_idx1: %d\n", m_idx1.length);
-        MatrixOperator.print_int_1d_array(m_idx1);
-        Util.pause();
+        if (is_debug) {
+            System.out.printf("[nn_match_two_way] m_idx1: %d\n", m_idx1.length);
+            MatrixOperator.print_int_1d_array(m_idx1);
+            Util.pause();
 
-        System.out.printf("[nn_match_two_way] m_idx2: %d\n", m_idx2.length);
-        MatrixOperator.print_int_1d_array(m_idx2);
-        Util.pause();
+            System.out.printf("[nn_match_two_way] m_idx2: %d\n", m_idx2.length);
+            MatrixOperator.print_int_1d_array(m_idx2);
+            Util.pause();
 
-        System.out.printf("[nn_match_two_way] sum_bool_1d_array(keep): %d\n", sum_bool_1d_array(keep));
-        Util.pause();
+            System.out.printf("[nn_match_two_way] sum_bool_1d_array(keep): %d\n", sum_bool_1d_array(keep));
+            Util.pause();
+        }
 
         // Populate the final 3xN match data structure.
         float[][] matches = get_float_2d_array(3, sum_bool_1d_array(keep), 0.0f);
@@ -229,22 +248,29 @@ public class PointTracker extends MatrixOperator{
         //  Remove oldest points, store its size to update ids later.
         int remove_size = get_num_all_pts_idx(0);
 
-        System.out.println("deb; " + all_pts);
+        if (is_debug) {
+            System.out.println("deb; " + all_pts);
+        }
 
         all_pts.remove(0);
         all_pts.add(_pts);
 
-        System.out.printf("deb-1; %d %d %d %d %f", remove_size, all_pts.size(), all_pts.get(0).get(0).x, all_pts.get(0).get(0).y, all_pts.get(0).get(0).score);
-        Util.pause();
+        if (is_debug) {
+            System.out.printf("deb-1; %d %d %d %d %f", remove_size, all_pts.size(), all_pts.get(0).get(0).x, all_pts.get(0).get(0).y, all_pts.get(0).get(0).score);
+            Util.pause();
 
-        System.out.println("tracks-1");
-        MatrixOperator.print_float_2d_array(tracks);
-        Util.pause();
+            System.out.println("tracks-1");
+            MatrixOperator.print_float_2d_array(tracks);
+            Util.pause();
+        }
 
         if (_is_first) {
             int[] offsets = get_offsets();
-            System.out.printf("deb-4-1; %d\n", offsets.length);
-            MatrixOperator.print_int_1d_array(offsets);
+            if (is_debug) {
+                System.out.printf("deb-4-1; %d\n", offsets.length);
+                MatrixOperator.print_int_1d_array(offsets);
+            }
+
 
             boolean[] matched = get_bool_1d_array(_pts.size(), false);
 
@@ -270,14 +296,17 @@ public class PointTracker extends MatrixOperator{
                 temp_cnt++;
             }
 
-
             // new_tracks = -1*np.ones((new_ids.shape[0], self.maxl + 2))
             // new_tracks[:, -1] = new_ids
             float[][] new_tracks = get_float_2d_array(new_ids.length, maxl + 2, -1.0f);
-            // System.out.println(new_ids.length); // 79
-            // System.out.println(maxl + 2); // 7
-            // System.out.println(new_tracks.length - 1); // 78
-            // System.out.println(new_tracks[0].length - 1); // 6
+
+            if (is_debug) {
+                System.out.println(new_ids.length); // 79
+                System.out.println(maxl + 2); // 7
+                System.out.println(new_tracks.length - 1); // 78
+                System.out.println(new_tracks[0].length - 1); // 6
+            }
+
             for (int i = 0; i < new_tracks.length; i++) {
                 new_tracks[i][new_tracks[0].length - 1] = (float) new_ids[i];
             }
@@ -326,20 +355,24 @@ public class PointTracker extends MatrixOperator{
             // Store the last descriptors.
             last_desc = _desc.clone();
 
-            // System.out.printf("deb-7-1: %d %d\n", tracks.length, tracks[0].length);
-            // System.out.printf("deb-7-2: %d %d\n", last_desc.length, last_desc[0].length);
-            // Util.pause();
-            // MatrixOperator.print_float_2d_array(tracks);
-            // MatrixOperator.print_float_2d_array(last_desc);
-            // Util.pause();
+            if (is_debug) {
+                System.out.printf("deb-7-1: %d %d\n", tracks.length, tracks[0].length);
+                System.out.printf("deb-7-2: %d %d\n", last_desc.length, last_desc[0].length);
+                Util.pause();
+                MatrixOperator.print_float_2d_array(tracks);
+                MatrixOperator.print_float_2d_array(last_desc);
+                Util.pause();
+            }
         }
         else {
             // Remove oldest point in track.
             tracks = get_float_2d_sub_array(tracks, 2, 1);
 
-            System.out.printf("tracks-2: %dx%d\n", tracks.length, tracks[0].length);
-            MatrixOperator.print_float_2d_array(tracks);
-            Util.pause();
+            if (is_debug) {
+                System.out.printf("tracks-2: %dx%d\n", tracks.length, tracks[0].length);
+                MatrixOperator.print_float_2d_array(tracks);
+                Util.pause();
+            }
 
             // Update track offsets.
             for (int i = 2; i < tracks[0].length; i++) {
@@ -357,22 +390,28 @@ public class PointTracker extends MatrixOperator{
                 }
             }
 
-            System.out.printf("tracks-3: %dx%d\n", tracks.length, tracks[0].length);
-            MatrixOperator.print_float_2d_array(tracks);
-            Util.pause();
+            if (is_debug) {
+                System.out.printf("tracks-3: %dx%d\n", tracks.length, tracks[0].length);
+                MatrixOperator.print_float_2d_array(tracks);
+                Util.pause();
+            }
 
             int[] offsets = get_offsets();
 
-            System.out.printf("deb-4-1: %d\n", offsets.length);
-            MatrixOperator.print_int_1d_array(offsets);
-            Util.pause();
+            if (is_debug) {
+                System.out.printf("deb-4-1: %d\n", offsets.length);
+                MatrixOperator.print_int_1d_array(offsets);
+                Util.pause();
+            }
 
             // Add a new -1 column.
             tracks = hstack_2d_float_array(tracks, get_float_2d_array(tracks.length, 1, -1.0f));
 
-            System.out.printf("deb-4-2: %dx%d\n", tracks.length, tracks[0].length);
-            MatrixOperator.print_float_2d_array(tracks);
-            Util.pause();
+            if (is_debug) {
+                System.out.printf("deb-4-2: %dx%d\n", tracks.length, tracks[0].length);
+                MatrixOperator.print_float_2d_array(tracks);
+                Util.pause();
+            }
 
             // Try to append to existing tracks.
             boolean[] matched = get_bool_1d_array(_pts.size(), false);
@@ -380,17 +419,19 @@ public class PointTracker extends MatrixOperator{
 
             float[][] matches_T = transpose_float_2d_array(matches);
 
-            System.out.printf("matched: %d\n", matched.length);
-            MatrixOperator.print_boolean_1d_array(matched);
-            Util.pause();
+            if (is_debug) {
+                System.out.printf("matched: %d\n", matched.length);
+                MatrixOperator.print_boolean_1d_array(matched);
+                Util.pause();
 
-            System.out.printf("matches: %dx%d\n", matches.length, matches[0].length);
-            MatrixOperator.print_float_2d_array(matches);
-            Util.pause();
+                System.out.printf("matches: %dx%d\n", matches.length, matches[0].length);
+                MatrixOperator.print_float_2d_array(matches);
+                Util.pause();
 
-            System.out.printf("matches_T: %dx%d\n", matches_T.length, matches_T[0].length);
-            MatrixOperator.print_float_2d_array(matches_T);
-            Util.pause();
+                System.out.printf("matches_T: %dx%d\n", matches_T.length, matches_T[0].length);
+                MatrixOperator.print_float_2d_array(matches_T);
+                Util.pause();
+            }
 
             for (int i = 0; i < matches_T.length; i++) {
                 int id1 = (int) matches_T[i][0] + offsets[offsets.length - 2];
@@ -441,9 +482,11 @@ public class PointTracker extends MatrixOperator{
                 }
             }
 
-            System.out.printf("tracks-4: %dx%d\n", tracks.length, tracks[0].length);
-            MatrixOperator.print_float_2d_array(tracks);
-            Util.pause();
+            if (is_debug) {
+                System.out.printf("tracks-4: %dx%d\n", tracks.length, tracks[0].length);
+                MatrixOperator.print_float_2d_array(tracks);
+                Util.pause();
+            }
 
             // Add unmatched tracks.
             // new_ids = np.arange(pts.shape[1]) + offsets[-1]
@@ -470,9 +513,11 @@ public class PointTracker extends MatrixOperator{
             // new_tracks = -1*np.ones((new_ids.shape[0], self.maxl + 2))
             float[][] new_tracks = get_float_2d_array(new_ids.length, maxl + 2, -1.0f);
 
-            // System.out.printf("new_ids.length: %d\n", new_ids.length);
-            // System.out.printf("maxl: %d\n", maxl);
-            // System.out.printf("new_tracks-1: %dx%d\n", new_tracks.length, new_tracks[0].length);
+            if (is_debug) {
+                System.out.printf("new_ids.length: %d\n", new_ids.length);
+                System.out.printf("maxl: %d\n", maxl);
+                System.out.printf("new_tracks-1: %dx%d\n", new_tracks.length, new_tracks[0].length);
+            }
 
             for (int i = 0; i < new_tracks.length; i++) {
                 new_tracks[i][new_tracks[0].length - 1] = (float) new_ids[i]; //@sjyoon
@@ -525,15 +570,16 @@ public class PointTracker extends MatrixOperator{
             // Store the last descriptors.
             last_desc = _desc.clone();
 
-            Util.pause();
-            System.out.printf("[Final] tracks: %dx%d\n", tracks.length, tracks[0].length);
-            MatrixOperator.print_float_2d_array(tracks);
-            Util.pause();
+            if (is_debug) {
+                Util.pause();
+                System.out.printf("[Final] tracks: %dx%d\n", tracks.length, tracks[0].length);
+                MatrixOperator.print_float_2d_array(tracks);
+                Util.pause();
 
-            System.out.printf("[Final] last_desc: %dx%d\n", last_desc.length, last_desc[0].length);
-            MatrixOperator.print_float_2d_array(last_desc);
-            Util.pause();
-
+                System.out.printf("[Final] last_desc: %dx%d\n", last_desc.length, last_desc[0].length);
+                MatrixOperator.print_float_2d_array(last_desc);
+                Util.pause();
+            }
         }
     }
 
@@ -571,9 +617,11 @@ public class PointTracker extends MatrixOperator{
             }
         }
 
-        System.out.printf("[get_tracks] good_len: %d.\n", good_len.length);
-        MatrixOperator.print_boolean_1d_array(good_len);
-        Util.pause();
+        if (is_debug) {
+            System.out.printf("[get_tracks] good_len: %d.\n", good_len.length);
+            MatrixOperator.print_boolean_1d_array(good_len);
+            Util.pause();
+        }
 
         // Remove tracks which do not have an observation in most recent frame.
         // not_headless = (self.tracks[:, -1] != -1)
@@ -584,21 +632,24 @@ public class PointTracker extends MatrixOperator{
             }
         }
 
-        System.out.printf("[get_tracks] not_headless: %d.\n", not_headless.length);
-        MatrixOperator.print_boolean_1d_array(not_headless);
-        Util.pause();
+        if (is_debug) {
+            System.out.printf("[get_tracks] not_headless: %d.\n", not_headless.length);
+            MatrixOperator.print_boolean_1d_array(not_headless);
+            Util.pause();
+        }
 
         // keepers = np.logical_and.reduce((valid, good_len, not_headless))
         boolean[] keepers = logical_and_for_three_arrays(valid, good_len, not_headless);
 
-        System.out.printf("[get_tracks] keepers: %d.\n", keepers.length);
-        MatrixOperator.print_boolean_1d_array(keepers);
-        Util.pause();
+        if (is_debug) {
+            System.out.printf("[get_tracks] keepers: %d.\n", keepers.length);
+            MatrixOperator.print_boolean_1d_array(keepers);
+            Util.pause();
 
-        System.out.printf("[get_tracks] get_num_true_from_1d_boolean_array(keepers): %d.\n", get_num_true_from_1d_boolean_array(keepers)); // 79
-        System.out.printf("[get_tracks] tracks[0].length: %d.\n", tracks[0].length); // 7
-        System.out.printf("[get_tracks] tracks: %dx%d.\n", tracks.length, tracks[0].length); // 79x7
-
+            System.out.printf("[get_tracks] get_num_true_from_1d_boolean_array(keepers): %d.\n", get_num_true_from_1d_boolean_array(keepers)); // 79
+            System.out.printf("[get_tracks] tracks[0].length: %d.\n", tracks[0].length); // 7
+            System.out.printf("[get_tracks] tracks: %dx%d.\n", tracks.length, tracks[0].length); // 79x7
+        }
 
         // returned_tracks = self.tracks[keepers, :].copy()
         float[][] returned_tracks = get_float_2d_array(get_num_true_from_1d_boolean_array(keepers), tracks[0].length, 0.0f); // 79x7
@@ -606,21 +657,22 @@ public class PointTracker extends MatrixOperator{
         for (int i = 0; i < keepers.length; i++) {
             if (keepers[i]) { // 79
                 for (int j = 0; j < tracks[0].length; j++) {
-                    // System.out.printf("[get_tracks] %d, %d, %d.\n", temp_cnt, i, j);
                     returned_tracks[temp_cnt][j] = tracks[i][j];
                 }
                 temp_cnt++;
             }
         }
 
-        if (_is_first) {
-            System.out.printf("[get_tracks] returned_tracks: %dx%d.\n", get_num_true_from_1d_boolean_array(keepers), tracks[0].length);
+        if (is_debug) {
+            if (_is_first) {
+                System.out.printf("[get_tracks] returned_tracks: %dx%d.\n", get_num_true_from_1d_boolean_array(keepers), tracks[0].length);
+            }
+            else {
+                System.out.printf("[get_tracks] returned_tracks: %dx%d.\n", returned_tracks.length, returned_tracks[0].length);
+                MatrixOperator.print_float_2d_array(returned_tracks);
+            }
+            Util.pause();
         }
-        else {
-            System.out.printf("[get_tracks] returned_tracks: %dx%d.\n", returned_tracks.length, returned_tracks[0].length);
-            MatrixOperator.print_float_2d_array(returned_tracks);
-        }
-        Util.pause();
 
         return returned_tracks;
     }

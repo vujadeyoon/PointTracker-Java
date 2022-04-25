@@ -58,7 +58,7 @@ public class MatrixOperator {
         int row = arr.length;
         int col = arr[0].length;
 
-        float[][] res = new float[col][row];
+        float[][] res = get_float_2d_array(col, row, 0.0f);
 
         for (int y = 0; y < row; y++) {
             for (int x = 0; x < col; x++) {
@@ -128,18 +128,18 @@ public class MatrixOperator {
     }
 
     protected static int[] argmin_axis_0(float[][] arr) {
-        int val_min = 999999999;
+        float val_min = 99999.999f;
         int idx_min = -1;
         int row = arr.length;
         int col = arr[0].length;
         int[] res = new int[col];
 
         for (int x = 0; x < col; x++) {
-            val_min = 999999999;
+            val_min = 99999.999f;
             idx_min = -1;
             for (int y = 0; y < row; y++) {
                 if (arr[y][x] < val_min) {
-                    val_min = (int) arr[y][x];
+                    val_min = arr[y][x];
                     idx_min = y;
                 }
             }
@@ -150,18 +150,18 @@ public class MatrixOperator {
     }
 
     protected static int[] argmin_axis_1(float[][] arr) {
-        int val_min = 999999999;
+        float val_min = 99999.999f;
         int idx_min = -1;
         int row = arr.length;
         int col = arr[0].length;
         int[] res = new int[row];
 
         for (int y = 0; y < row; y++) {
-            val_min = 999999999;
+            val_min = 99999.999f;
             idx_min = -1;
             for (int x = 0; x < col; x++) {
                 if (arr[y][x] < val_min) {
-                    val_min = (int) arr[y][x];
+                    val_min = arr[y][x];
                     idx_min = x;
                 }
             }
@@ -172,16 +172,16 @@ public class MatrixOperator {
     }
 
     protected static float[] min_axis_1(float[][] arr) {
-        int val_min = 999999999;
+        float val_min = 99999.999f;
         int row = arr.length;
         int col = arr[0].length;
         float[] res = new float[row];
 
         for (int y = 0; y < row; y++) {
-            val_min = 999999999;
+            val_min = 99999.999f;
             for (int x = 0; x < col; x++) {
                 if (arr[y][x] < val_min) {
-                    val_min = (int) arr[y][x];
+                    val_min = arr[y][x];
                 }
             }
             res[y] = val_min;
@@ -331,6 +331,8 @@ public class MatrixOperator {
     protected static float[][] get_float_2d_sub_array(float[][] arr, int obj, int axis) {
         int row = arr.length;
         int col = arr[0].length;
+
+
         int new_idx = 0;
         float[][] res = null;
         if (axis == 0) {
@@ -494,6 +496,36 @@ public class MatrixOperator {
             }
             System.out.println();
         }
+    }
+
+    public static void print_boolean_2d_array(boolean[][] _arr) {
+        for (int i = 0; i < _arr.length; i++) {
+            for (int j = 0; j < _arr[0].length; j++) {
+                System.out.printf("%b ", _arr[i][j]);
+            }
+            System.out.println();
+        }
+    }
+
+    public static void print_float_1d_array(float[] _arr) {
+        for (int i = 0; i < _arr.length; i++) {
+            System.out.printf("%f ", _arr[i]);
+        }
+        System.out.println();
+    }
+
+    public static void print_int_1d_array(int[] _arr) {
+        for (int i = 0; i < _arr.length; i++) {
+            System.out.printf("%d ", _arr[i]);
+        }
+        System.out.println();
+    }
+
+    public static void print_boolean_1d_array(boolean[] _arr) {
+        for (int i = 0; i < _arr.length; i++) {
+            System.out.printf("%b ", _arr[i]);
+        }
+        System.out.println();
     }
 }
 
